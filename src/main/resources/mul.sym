@@ -1,0 +1,10 @@
+xtmp		= $06
+sqrh		= $2100
+abs		= $2200
+num1		= $02
+num2		= $03
+rl		= $04
+mul		= $100e
+rh		= $05
+sqrl		= $2000
+LINKING		= 
