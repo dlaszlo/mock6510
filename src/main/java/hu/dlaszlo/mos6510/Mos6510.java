@@ -1,19 +1,18 @@
-package hu.dlaszlo.cpu6510;
+package hu.dlaszlo.mos6510;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class Cpu6510 {
-
-    private final byte[] memory = new byte[65536];
+public class Mos6510 {
 
     private final Map<Opcode, Runnable> opcodes = new HashMap<>();
 
     private boolean verbose = true;
 
     private Registers registers = new Registers();
+    private Memory memory = new Memory();
 
     public boolean isVerbose() {
         return verbose;
@@ -23,17 +22,12 @@ public class Cpu6510 {
         this.verbose = verbose;
     }
 
-    public byte[] getMemory() {
+    public Registers getRegisters() {
+        return registers;
+    }
+
+    public Memory getMemory() {
         return memory;
-    }
-
-    public void setMemory(int pos, int b) {
-        memory[pos] = (byte) (b & 0xff);
-    }
-
-    public int getMemory(int pos) {
-        int val = memory[pos];
-        return val & 0xff;
     }
 
     /**
@@ -51,7 +45,7 @@ public class Cpu6510 {
      * @return address
      */
     private int addrZeropage() {
-        return memory[registers.getAndIncPc()];
+        return memory.getByte(registers.getAndIncPc());
     }
 
     /**
@@ -62,7 +56,7 @@ public class Cpu6510 {
      */
     private int addrIndexedZeropage(int regValue) {
         int idx = regValue;
-        return (memory[registers.getAndIncPc()] + idx) & 0xff;
+        return (memory.getByte(registers.getAndIncPc()) + idx) & 0xff;
     }
 
     /**
@@ -72,9 +66,9 @@ public class Cpu6510 {
      */
     private int addrIndexedIndirect() {
         int idx = registers.getXr();
-        int addr = (memory[registers.getAndIncPc()] + idx) & 0xff;
-        return memory[addr]
-                + (memory[(addr + 1) & 0xff]) * 0x100;
+        int addr = (memory.getByte(registers.getAndIncPc()) + idx) & 0xff;
+        return memory.getByte(addr)
+                + (memory.getByte((addr + 1) & 0xff)) * 0x100;
     }
 
     /**
@@ -84,9 +78,9 @@ public class Cpu6510 {
      */
     private int addrIndirectIndexed() {
         int idx = registers.getYr();
-        int addr = memory[registers.getAndIncPc()];
-        return memory[addr]
-                + memory[(addr + 1) & 0xff] * 0x100
+        int addr = memory.getByte(registers.getAndIncPc());
+        return memory.getByte(addr)
+                + memory.getByte((addr + 1) & 0xff) * 0x100
                 + idx;
     }
 
@@ -96,8 +90,8 @@ public class Cpu6510 {
      * @return address
      */
     private int addrAbsolute() {
-        return memory[registers.getAndIncPc()]
-                + (memory[registers.getAndIncPc()]) * 0x100;
+        return memory.getByte(registers.getAndIncPc())
+                + (memory.getByte(registers.getAndIncPc())) * 0x100;
     }
 
     /**
@@ -107,8 +101,8 @@ public class Cpu6510 {
      * @return address
      */
     private int addrAbsoluteIndexed(int regValue) {
-        return memory[registers.getAndIncPc()]
-                + (memory[registers.getAndIncPc()]) * 0x100
+        return memory.getByte(registers.getAndIncPc())
+                + (memory.getByte(registers.getAndIncPc())) * 0x100
                 + regValue;
     }
 
@@ -118,11 +112,12 @@ public class Cpu6510 {
      * @return address
      */
     private int addrAbsoluteIndirect() {
-        int addrLo = memory[registers.getAndIncPc()] & 0xff;
-        int addrHi = memory[registers.getAndIncPc()] & 0xff;
+        int addrLo = memory.getByte(registers.getAndIncPc());
+        int addrHi = memory.getByte(registers.getAndIncPc());
         int addr1 = addrLo + addrHi * 0x100;
         int addr2 = ((addrLo + 1) & 0xff) + addrHi * 0x100;
-        return memory[addr1] + memory[addr2];
+        return memory.getByte(addr1)
+                + memory.getByte(addr2) * 0x100;
     }
 
     /**
@@ -131,19 +126,20 @@ public class Cpu6510 {
      * @return address
      */
     private int addrRelative() {
-        return (registers.getPc() + 1) + memory[registers.getAndIncPc()];
+        return (registers.getPc() + 1)
+                + memory.getByte(registers.getAndIncPc());
     }
 
     private void ora(int addr) {
-        var value = memory[addr] & 0xff;
-        var tmp = registers.getAc() | value;
+        int value = memory.getByte(addr);
+        int tmp = registers.getAc() | value;
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
         registers.setAc(tmp);
     }
 
     private void and(int addr) {
-        int value = memory[addr] & 0xff;
+        int value = memory.getByte(addr);
         var tmp = registers.getAc() & value;
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
@@ -151,7 +147,7 @@ public class Cpu6510 {
     }
 
     private void eor(int addr) {
-        int value = memory[addr] & 0xff;
+        int value = memory.getByte(addr);
         var tmp = registers.getAc() ^ value;
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
@@ -160,7 +156,7 @@ public class Cpu6510 {
 
     private void adc(int addr) {
         boolean prevSign = (registers.getAc() & 0x80) != 0;
-        int value = memory[addr] & 0xff;
+        int value = memory.getByte(addr);
         int tmp;
         if (registers.isDecimal()) {
             tmp = (registers.getAc() & 0x0f) + (value & 0x0f) + (registers.isCarry() ? 1 : 0);
@@ -190,7 +186,7 @@ public class Cpu6510 {
 
     private void sbc(int addr) {
         boolean prevSign = (registers.getAc() & 0x80) != 0;
-        int value = memory[addr] & 0xff;
+        int value = memory.getByte(addr);
         int tmp;
         if (registers.isDecimal()) {
             tmp = (registers.getAc() & 0x0f) - (value & 0x0f) + (registers.isCarry() ? 1 : 0) - 1;
@@ -213,7 +209,7 @@ public class Cpu6510 {
     }
 
     private void cmp(int addr, int regValue) {
-        int value = memory[addr] & 0xff;
+        int value = memory.getByte(addr);
         var tmp = regValue - value;
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
@@ -221,9 +217,9 @@ public class Cpu6510 {
     }
 
     private void dec(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         tmp = (tmp - 1) & 0xff;
-        memory[addr] = (byte) tmp;
+        memory.setByte(addr, tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero(tmp == 0);
     }
@@ -243,9 +239,9 @@ public class Cpu6510 {
     }
 
     private void inc(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         tmp = (tmp + 1) & 0xff;
-        memory[addr] = (byte) tmp;
+        memory.setByte(addr, tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero(tmp == 0);
     }
@@ -274,10 +270,10 @@ public class Cpu6510 {
     }
 
     private void asl(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         registers.setCarry((tmp & 0x80) != 0);
         tmp = (tmp << 1) & 0xff;
-        memory[addr] = (byte) tmp;
+        memory.setByte(addr, tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero(tmp == 0);
     }
@@ -292,9 +288,10 @@ public class Cpu6510 {
     }
 
     private void rol(int addr) {
-        int tmp = (memory[addr] & 0xff) << 1;
+        int tmp = memory.getByte(addr);
+        tmp <<= 1;
         tmp |= registers.isCarry() ? 1 : 0;
-        memory[addr] = (byte) (tmp & 0xff);
+        memory.setByte(addr, tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
         registers.setCarry((tmp & 0x100) != 0);
@@ -310,10 +307,10 @@ public class Cpu6510 {
     }
 
     private void lsr(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         registers.setCarry((tmp & 0x01) != 0);
         tmp >>= 1;
-        memory[addr] = (byte) tmp;
+        memory.setByte(addr, tmp);
         registers.setSign(false);
         registers.setZero(tmp == 0);
     }
@@ -329,10 +326,10 @@ public class Cpu6510 {
     }
 
     private void ror(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         boolean newCarry = (tmp & 0x01) != 0;
         tmp = (tmp >> 1) | (registers.isCarry() ? 0x80 : 0);
-        memory[addr] = (byte) tmp;
+        memory.setByte(addr, tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setCarry(newCarry);
         registers.setZero(tmp == 0);
@@ -379,11 +376,11 @@ public class Cpu6510 {
     }
 
     private int pop() {
-        return memory[registers.incAndGetSp() + 0x100] & 0xff;
+        return memory.getByte(registers.incAndGetSp() + 0x100);
     }
 
     private void push(int value) {
-        memory[registers.getAndDecSp() + 0x100] = (byte) (value & 0xff);
+        memory.setByte(registers.getAndDecSp() + 0x100, value);
     }
 
     private void pla() {
@@ -469,7 +466,7 @@ public class Cpu6510 {
     }
 
     private void bit(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         registers.setSign((tmp & 0x80) != 0);
         registers.setOverflow((tmp & 0x40) != 0);
         registers.setZero((tmp & registers.getAc()) == 0);
@@ -504,36 +501,36 @@ public class Cpu6510 {
     }
 
     private void lda(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         registers.setAc(tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero(tmp == 0);
     }
 
     private void sta(int addr) {
-        memory[addr] = (byte) registers.getAc();
+        memory.setByte(addr, registers.getAc());
     }
 
     private void ldx(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         registers.setXr(tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero(tmp == 0);
     }
 
     private void stx(int addr) {
-        memory[addr] = (byte) registers.getXr();
+        memory.setByte(addr, registers.getXr());
     }
 
     private void ldy(int addr) {
-        int tmp = memory[addr] & 0xff;
+        int tmp = memory.getByte(addr);
         registers.setYr(tmp);
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero(tmp == 0);
     }
 
     private void sty(int addr) {
-        memory[addr] = (byte) registers.getYr();
+        memory.setByte(addr, registers.getYr());
     }
 
     private void brk() {
@@ -568,7 +565,7 @@ public class Cpu6510 {
         registers.setPc(addr);
     }
 
-    public Cpu6510() {
+    public Mos6510() {
         opcodes.put(Opcode.ORA_IMM, () -> ora(addrImmediate()));
         opcodes.put(Opcode.ORA_ZP, () -> ora(addrZeropage()));
         opcodes.put(Opcode.ORA_ZPI, () -> ora(addrIndexedZeropage(registers.getXr())));
@@ -736,7 +733,7 @@ public class Cpu6510 {
     public void load(byte[] program) {
         int d = program[0] + program[1] * 0x100;
         for (int s = 2; s < program.length; s++) {
-            memory[d] = program[s];
+            memory.setByte(d, program[s]);
             d++;
         }
     }
@@ -747,8 +744,8 @@ public class Cpu6510 {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format(".%04X   ", pc - 1));
             sb.append(String.format("%02X ", opcode.getOpcode()));
-            int p1 = memory[pc] & 0xff;
-            int p2 = memory[pc + 1] & 0xff;
+            int p1 = memory.getByte(pc);
+            int p2 = memory.getByte(pc + 1);
             int w = p1 + p2 * 0x100;
             int r = (pc + 1) + p1;
             sb.append(opcode.getLength() > 1 ? String.format("%02X ", p1) : "   ");
@@ -788,10 +785,9 @@ public class Cpu6510 {
         if (verbose) {
             System.out.println(registers.toString());
         }
-
         while (registers.getPc() != end) {
-            byte bc = memory[registers.getAndIncPc()];
-            Opcode opcode = getOpcode(bc);
+            int bc = memory.getByte(registers.getAndIncPc());
+            Opcode opcode = getOpcode((byte) bc);
             run(opcode);
         }
     }

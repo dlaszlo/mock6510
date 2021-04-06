@@ -1,4 +1,4 @@
-package hu.dlaszlo.cpu6510;
+package hu.dlaszlo.mos6510;
 
 public enum Opcode {
 
