@@ -1,5 +1,7 @@
 package hu.dlaszlo.mos6510;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class Registers {
 
     // Register: A
@@ -122,6 +124,28 @@ public class Registers {
         this.sign = sign;
     }
 
+    public int getStatusFlag() {
+        int tmp = (isCarry() ? 0b0000_0001 : 0)
+                + (isZero() ? 0b0000_0010 : 0)
+                + (isInterrupt() ? 0b0000_0100 : 0)
+                + (isDecimal() ? 0b0000_1000 : 0)
+                + (isBreak_() ? 0b0001_0000 : 0)
+                + 0b0010_0000
+                + (isOverflow() ? 0b0100_0000 : 0)
+                + (isSign() ? 0b1000_0000 : 0);
+        return tmp;
+    }
+
+    public void setStatusFlag(int statusFlag) {
+        setCarry((statusFlag & 0b0000_0001) != 0);
+        setZero((statusFlag & 0b0000_0010) != 0);
+        setInterrupt((statusFlag & 0b0000_0100) != 0);
+        setDecimal((statusFlag & 0b0000_1000) != 0);
+        setBreak_((statusFlag & 0b0001_0000) != 0);
+        setOverflow((statusFlag & 0b0100_0000) != 0);
+        setSign((statusFlag & 0b1000_0000) != 0);
+    }
+
     public int getAndIncPc() {
         int tmp = pc;
         pc = (pc + 1) & 0xffff;
@@ -139,20 +163,22 @@ public class Registers {
         return sp;
     }
 
+
     @Override
     public String toString() {
-        return "A=" + String.format("%02X", ac) +
-                ", X=" + String.format("%02X", xr) +
-                ", Y=" + String.format("%02X", yr) +
-                ", S=" + String.format("%02X", sp) +
-                ", P=" + String.format("%04X", pc) +
-                ", c=" + (carry ? "1" : "0") +
-                ", z=" + (zero ? "1" : "0") +
-                ", i=" + (interrupt ? "1" : "0") +
-                ", d=" + (decimal ? "1" : "0") +
-                ", b=" + (break_ ? "1" : "0") +
-                ", v=" + (overflow ? "1" : "0") +
-                ", n=" + (sign ? "1" : "0");
+        return StringUtils.repeat(" ", 40) + "A  X  Y  S  P    czidbvn \n" +
+                StringUtils.repeat(" ", 40) + String.format("%02X ", ac) +
+                String.format("%02X ", xr) +
+                String.format("%02X ", yr) +
+                String.format("%02X ", sp) +
+                String.format("%04X ", pc) +
+                (carry ? "1" : "0") +
+                (zero ? "1" : "0") +
+                (interrupt ? "1" : "0") +
+                (decimal ? "1" : "0") +
+                (break_ ? "1" : "0") +
+                (overflow ? "1" : "0") +
+                (sign ? "1" : "0");
     }
 
 }

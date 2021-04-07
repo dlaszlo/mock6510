@@ -17,6 +17,7 @@ public class Test {
                 if (x == -128 && y == -128) {
                     continue;
                 }
+                mos6510.setVerbose(x == 15 && y == -123);
                 mos6510.getMemory().setByte(0x02, x);
                 mos6510.getMemory().setByte(0x03, y);
                 mos6510.run(0x1008, 0x100b);
