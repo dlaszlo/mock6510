@@ -28,6 +28,23 @@ public class Registers {
     private boolean overflow = false;  // overflow
     private boolean sign = false;  // negative
 
+    public Registers copy() {
+        Registers reg = new Registers();
+        reg.setAc(this.getAc());
+        reg.setXr(this.getXr());
+        reg.setYr(this.getYr());
+        reg.setSp(this.getSp());
+        reg.setPc(this.getPc());
+        reg.setCarry(this.isCarry());
+        reg.setZero(this.isZero());
+        reg.setInterrupt(this.isInterrupt());
+        reg.setDecimal(this.isDecimal());
+        reg.setBreak_(this.isBreak_());
+        reg.setOverflow(this.isOverflow());
+        reg.setSign(this.isSign());
+        return reg;
+    }
+
     public int getAc() {
         return ac;
     }
@@ -125,7 +142,7 @@ public class Registers {
     }
 
     public int getStatusFlag() {
-        int tmp = (isCarry() ? 0b0000_0001 : 0)
+        return (isCarry() ? 0b0000_0001 : 0)
                 + (isZero() ? 0b0000_0010 : 0)
                 + (isInterrupt() ? 0b0000_0100 : 0)
                 + (isDecimal() ? 0b0000_1000 : 0)
@@ -133,7 +150,6 @@ public class Registers {
                 + 0b0010_0000
                 + (isOverflow() ? 0b0100_0000 : 0)
                 + (isSign() ? 0b1000_0000 : 0);
-        return tmp;
     }
 
     public void setStatusFlag(int statusFlag) {
@@ -166,19 +182,20 @@ public class Registers {
 
     @Override
     public String toString() {
-        return StringUtils.repeat(" ", 40) + "A  X  Y  S  P    czidbvn \n" +
+        return StringUtils.repeat(" ", 40) + "A  X  Y  S  P    NV-BDIZC \n" +
                 StringUtils.repeat(" ", 40) + String.format("%02X ", ac) +
                 String.format("%02X ", xr) +
                 String.format("%02X ", yr) +
                 String.format("%02X ", sp) +
                 String.format("%04X ", pc) +
-                (carry ? "1" : "0") +
-                (zero ? "1" : "0") +
-                (interrupt ? "1" : "0") +
-                (decimal ? "1" : "0") +
-                (break_ ? "1" : "0") +
+                (sign ? "1" : "0") +
                 (overflow ? "1" : "0") +
-                (sign ? "1" : "0");
+                "1" +
+                (break_ ? "1" : "0") +
+                (decimal ? "1" : "0") +
+                (interrupt ? "1" : "0") +
+                (zero ? "1" : "0") +
+                (carry ? "1" : "0");
     }
 
 }

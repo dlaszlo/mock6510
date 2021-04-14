@@ -1,8 +1,11 @@
 PROGRAM = mul
+START_ADDRESS = 1000
 
 all: $(PROGRAM).prg
 
 $(PROGRAM).prg: $(PROGRAM).tmp
+#	b2 -c $(START_ADDRESS) $<
+#	mv $<.b2 $@
 	mv $< $@
 
 

@@ -11,6 +11,7 @@ public class Test {
         byte[] program = Test.class.getResourceAsStream("/mul.prg").readAllBytes();
         mos6510.load(program);
         mos6510.setVerbose(false);
+/*        mos6510.run(0x080d, 0x1000); */
         for (int x = -128; x < 128; x++) {
             System.out.println(x);
             for (int y = -128; y < 128; y++) {
@@ -29,7 +30,5 @@ public class Test {
                 }
             }
         }
-
     }
-
 }

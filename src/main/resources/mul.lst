@@ -1,7 +1,7 @@
 
 ; 64tass Turbo Assembler Macro V1.55.2200 listing file
 ; 64tass -C -a -o mul.tmp -L mul.lst --verbose-list -l mul.sym -D LINKING= mul.asm
-; Mon Apr  5 10:33:30 2021
+; Thu Apr  8 11:10:41 2021
 
 ;Offset	;Hex		;Monitor	;Source
 
@@ -42,6 +42,8 @@
 .1008	20 0e 10	jsr $100e	                jsr     mul
 .100b	4c 0b 10	jmp $100b	                jmp     *
 
+					; (signed multiplication) - by Oswald/Resource
+					; https://codebase64.org/doku.php?id=base:fast_8bit_multiplication_16bit_product
 .100e					mul             .proc
 .100e	a6 02		ldx $02		                ldx     num1
 .1010	a4 03		ldy $03		                ldy		num2

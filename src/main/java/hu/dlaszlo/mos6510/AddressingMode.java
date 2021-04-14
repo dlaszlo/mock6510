@@ -12,16 +12,14 @@ public class AddressingMode {
     /**
      * Immediate addressing: LDA #64
      */
-    public final static AddressResolver IMM = (registers, memory) -> {
-        return new Address(registers.getAndIncPc(), false, false);
-    };
+    public final static AddressResolver IMM = (registers, memory) ->
+            new Address(registers.getAndIncPc(), false, false);
 
     /**
      * Zeropage addressing: LDA $FE
      */
-    public final static AddressResolver ZP = (registers, memory) -> {
-        return new Address(memory.getByte(registers.getAndIncPc()), false, false);
-    };
+    public final static AddressResolver ZP = (registers, memory) ->
+            new Address(memory.getByte(registers.getAndIncPc()), false, false);
 
     /**
      * Indexed zeropage addressing: LDA $A0,X
@@ -72,10 +70,9 @@ public class AddressingMode {
     /**
      * Absolute addressing: LDA $1234
      */
-    public final static AddressResolver ABS = (registers, memory) -> {
-        return new Address(memory.getByte(registers.getAndIncPc())
-                + (memory.getByte(registers.getAndIncPc())) * 0x100, false, false);
-    };
+    public final static AddressResolver ABS = (registers, memory) ->
+            new Address(memory.getByte(registers.getAndIncPc())
+            + (memory.getByte(registers.getAndIncPc())) * 0x100, false, false);
 
     /**
      * Indexed absolute addressing: LDA $8000,X
@@ -118,8 +115,9 @@ public class AddressingMode {
      * Relative addressing
      */
     public final static AddressResolver REL = (registers, memory) -> {
-        return new Address((registers.getPc() + 1)
-                + memory.getByte(registers.getAndIncPc()), false, false);
+        // convert 8 bit unsigned byte to 8 bit signed byte
+        byte rel = (byte) memory.getByte(registers.getAndIncPc());
+        return new Address((registers.getPc()) + rel, false, false);
     };
 
 }

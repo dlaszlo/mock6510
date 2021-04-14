@@ -1,5 +1,7 @@
 package hu.dlaszlo.mos6510;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class Mos6510 {
 
     private boolean verbose = true;
@@ -34,22 +36,47 @@ public class Mos6510 {
 
     private void print(Opcode opcode) {
         if (verbose) {
-            int pc = registers.getPc();
+            Registers reg = registers.copy();
+            Memory mem = memory.copy();
+            int pc = reg.getPc();
+
             StringBuilder sb = new StringBuilder();
             sb.append(String.format(".%04X   ", pc - 1));
             sb.append(String.format("%02X ", opcode.getOpcode()));
-            int p1 = memory.getByte(pc);
-            int p2 = memory.getByte(pc + 1);
-            int w = p1 + p2 * 0x100;
-            int r = (pc + 1) + p1;
-            sb.append(opcode.getLength() > 1 ? String.format("%02X ", p1) : "   ");
-            sb.append(opcode.getLength() > 2 ? String.format("%02X ", p2) : "   ");
+
+            Address address = null;
+            if (opcode.getLength() > 1) {
+                address = opcode.getAddressResolver().getAddress(reg, mem);
+            }
+            sb.append(opcode.getLength() > 1 ? String.format("%02X ", mem.getByte(pc)) : "   ");
+            sb.append(opcode.getLength() > 2 ? String.format("%02X ", mem.getByte(pc + 1)) : "   ");
             sb.append("    ");
-            String ostr = opcode.getTemplate()
-                    .replace("$BYTE", String.format("%02X ", p1))
-                    .replace("$WORD", String.format("%04X ", w))
-                    .replace("$REL", String.format("%04X ", r));
+
+            String ostr = opcode.getTemplate();
+            if (address != null) {
+                ostr = ostr.replace("$BYTE", String.format("%02X", address.getAddress()));
+                ostr = ostr.replace("$WORD", String.format("%04X", address.getAddress()));
+                ostr = ostr.replace("$REL", String.format("%04X", address.getAddress()));
+            }
             sb.append(ostr);
+
+            sb.append(StringUtils.repeat(" ", 40 - sb.length()));
+
+            reg = registers.copy();
+
+            int cycles = opcode.getInstruction().run(opcode, reg, mem);
+            sb.append("Cycles: ").append(cycles);
+            if (opcode.getCyclesMin() != opcode.getCyclesMax()) {
+                if (cycles == opcode.getCyclesMax()) {
+                    sb.append("!");
+                }
+                sb.append(" (min: ")
+                        .append(opcode.getCyclesMin())
+                        .append(", max: ")
+                        .append(opcode.getCyclesMax())
+                        .append(")");
+            }
+
             System.out.println(sb);
         }
     }
@@ -66,25 +93,8 @@ public class Mos6510 {
     private void run(Opcode opcode) {
         int cycles = opcode.getInstruction().run(opcode, registers, memory);
         if (verbose) {
-            printCycleInfo(opcode, cycles);
             System.out.println(registers.toString());
         }
-    }
-
-    private void printCycleInfo(Opcode opcode, int cycles) {
-        StringBuilder sb = new StringBuilder("Cycles: ");
-        sb.append(cycles);
-        if (opcode.getCyclesMin() != opcode.getCyclesMax()) {
-            if (cycles == opcode.getCyclesMax()) {
-                sb.append("!");
-            }
-            sb.append(" (min: ")
-                    .append(opcode.getCyclesMin())
-                    .append(", max: ")
-                    .append(opcode.getCyclesMax())
-                    .append(")");
-        }
-        System.out.println(sb);
     }
 
     public void run(int start, int end) {
@@ -94,7 +104,8 @@ public class Mos6510 {
         }
         while (registers.getPc() != end) {
             int bc = memory.getByte(registers.getAndIncPc());
-            run(getOpcode(bc));
+            Opcode opcode = getOpcode(bc);
+            run(opcode);
         }
     }
 
