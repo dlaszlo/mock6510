@@ -27,7 +27,7 @@ public class Mos6510 {
 
 
     public void load(byte[] program) {
-        int d = program[0] + program[1] * 0x100;
+        int d = (program[0] & 0xff) + (program[1] & 0xff) * 0x100;
         for (int s = 2; s < program.length; s++) {
             memory.setByte(d, program[s]);
             d++;
@@ -41,22 +41,22 @@ public class Mos6510 {
             int pc = reg.getPc();
 
             StringBuilder sb = new StringBuilder();
-            sb.append(String.format(".%04X   ", pc - 1));
+            sb.append(String.format(".%04X   ", (pc - 1) & 0xffff));
             sb.append(String.format("%02X ", opcode.getOpcode()));
 
-            Address address = null;
-            if (opcode.getLength() > 1) {
-                address = opcode.getAddressResolver().getAddress(reg, mem);
-            }
             sb.append(opcode.getLength() > 1 ? String.format("%02X ", mem.getByte(pc)) : "   ");
             sb.append(opcode.getLength() > 2 ? String.format("%02X ", mem.getByte(pc + 1)) : "   ");
             sb.append("    ");
 
+            // operands are shown as written in the code, branches with their target address
             String ostr = opcode.getTemplate();
-            if (address != null) {
-                ostr = ostr.replace("$BYTE", String.format("%02X", address.getAddress()));
-                ostr = ostr.replace("$WORD", String.format("%04X", address.getAddress()));
-                ostr = ostr.replace("$REL", String.format("%04X", address.getAddress()));
+            if (opcode.getLength() > 1) {
+                ostr = ostr.replace("$BYTE", String.format("%02X", mem.getByte(pc)));
+                ostr = ostr.replace("$WORD", String.format("%04X", mem.getByte(pc) + mem.getByte(pc + 1) * 0x100));
+                if (ostr.contains("$REL")) {
+                    Address address = opcode.getAddressResolver().getAddress(reg, mem);
+                    ostr = ostr.replace("$REL", String.format("%04X", address.getAddress()));
+                }
             }
             sb.append(ostr);
 

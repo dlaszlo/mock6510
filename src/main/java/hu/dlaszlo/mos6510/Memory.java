@@ -7,11 +7,11 @@ public class Memory {
     private final byte[] ram = new byte[65536];
 
     public void setByte(int addr, int b) {
-        ram[addr] = (byte) (b & 0xff);
+        ram[addr & 0xffff] = (byte) (b & 0xff);
     }
 
     public int getByte(int addr) {
-        int val = ram[addr];
+        int val = ram[addr & 0xffff];
         return val & 0xff;
     }
 

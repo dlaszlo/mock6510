@@ -34,59 +34,66 @@ public class Instructions {
 
     public final static Instruction ADC = (opcode, registers, memory) -> {
         Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        boolean prevSign = (registers.getAc() & 0x80) != 0;
+        int ac = registers.getAc();
         int value = memory.getByte(addr.getAddress());
+        int carry = registers.isCarry() ? 1 : 0;
         int tmp;
         if (registers.isDecimal()) {
-            tmp = (registers.getAc() & 0x0f) + (value & 0x0f) + (registers.isCarry() ? 1 : 0);
+            tmp = (ac & 0x0f) + (value & 0x0f) + carry;
             if (tmp > 9) {
                 tmp += 6;
             }
             if (tmp <= 0x0f) {
-                tmp = (tmp & 0x0f) + (registers.getAc() & 0xf0) + (value & 0xf0);
+                tmp = (tmp & 0x0f) + (ac & 0xf0) + (value & 0xf0);
             } else {
-                tmp = (tmp & 0x0f) + (registers.getAc() & 0xf0) + (value & 0xf0) + 0x10;
+                tmp = (tmp & 0x0f) + (ac & 0xf0) + (value & 0xf0) + 0x10;
             }
-            registers.setZero(((registers.getAc() + value + (registers.isCarry() ? 1 : 0)) & 0xff) == 0);
+            // NMOS: zero flag comes from the binary sum, N and V from the intermediate BCD result
+            registers.setZero(((ac + value + carry) & 0xff) == 0);
             registers.setSign((tmp & 0x80) != 0);
+            registers.setOverflow(((ac ^ tmp) & 0x80) != 0 && ((ac ^ value) & 0x80) == 0);
             if ((tmp & 0x01f0) > 0x90) {
                 tmp += 0x60;
             }
             registers.setCarry((tmp & 0x0ff0) > 0xf0);
         } else {
-            tmp = registers.getAc() + value + (registers.isCarry() ? 1 : 0);
+            tmp = ac + value + carry;
             registers.setZero((tmp & 0xff) == 0);
             registers.setSign((tmp & 0x80) != 0);
+            // overflow: both operands have the same sign, and the result's sign differs
+            registers.setOverflow(((ac ^ value) & 0x80) == 0 && ((ac ^ tmp) & 0x80) != 0);
             registers.setCarry((tmp & ~0xff) != 0);
         }
         registers.setAc(tmp);
-        registers.setOverflow(prevSign != registers.isSign());
         return addr.isPageCrossed() ? opcode.getCyclesMax() : opcode.getCyclesMin();
     };
 
     public final static Instruction SBC = (opcode, registers, memory) -> {
         Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        boolean prevSign = (registers.getAc() & 0x80) != 0;
+        int ac = registers.getAc();
         int value = memory.getByte(addr.getAddress());
-        int tmp;
-        if (registers.isDecimal()) {
-            tmp = (registers.getAc() & 0x0f) - (value & 0x0f) + (registers.isCarry() ? 1 : 0) - 1;
-            if ((tmp & 0x10) != 0) {
-                tmp = ((tmp - 6) & 0x0f) | ((registers.getAc() & 0xf0) - (value & 0xf0) - 0x10);
-            } else {
-                tmp = (tmp & 0x0f) | ((registers.getAc() & 0xf0) - (value & 0xf0));
-            }
-            if ((tmp & 0x100) != 0) {
-                tmp -= 0x60;
-            }
-        } else {
-            tmp = registers.getAc() - value + (registers.isCarry() ? 1 : 0) - 1;
-        }
+        int borrow = registers.isCarry() ? 0 : 1;
+        // NMOS: all flags come from the binary difference, even in decimal mode
+        int tmp = ac - value - borrow;
         registers.setZero((tmp & 0xff) == 0);
         registers.setSign((tmp & 0x80) != 0);
         registers.setCarry((tmp & ~0xff) == 0);
-        registers.setOverflow(prevSign != registers.isSign());
-        registers.setAc(tmp);
+        // overflow: the operands have different signs, and the result's sign differs from A
+        registers.setOverflow(((ac ^ tmp) & 0x80) != 0 && ((ac ^ value) & 0x80) != 0);
+        if (registers.isDecimal()) {
+            int tmpDec = (ac & 0x0f) - (value & 0x0f) - borrow;
+            if ((tmpDec & 0x10) != 0) {
+                tmpDec = ((tmpDec - 6) & 0x0f) | ((ac & 0xf0) - (value & 0xf0) - 0x10);
+            } else {
+                tmpDec = (tmpDec & 0x0f) | ((ac & 0xf0) - (value & 0xf0));
+            }
+            if ((tmpDec & 0x100) != 0) {
+                tmpDec -= 0x60;
+            }
+            registers.setAc(tmpDec);
+        } else {
+            registers.setAc(tmp);
+        }
         return addr.isPageCrossed() ? opcode.getCyclesMax() : opcode.getCyclesMin();
     };
 
@@ -96,7 +103,7 @@ public class Instructions {
         var tmp = registers.getAc() - value;
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
-        registers.setCarry((tmp & ~0xff) != 0);
+        registers.setCarry((tmp & ~0xff) == 0);
         return addr.isPageCrossed() ? opcode.getCyclesMax() : opcode.getCyclesMin();
     };
 
@@ -106,7 +113,7 @@ public class Instructions {
         var tmp = registers.getXr() - value;
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
-        registers.setCarry((tmp & ~0xff) != 0);
+        registers.setCarry((tmp & ~0xff) == 0);
         return opcode.getCyclesMin();
     };
 
@@ -116,7 +123,7 @@ public class Instructions {
         var tmp = registers.getYr() - value;
         registers.setSign((tmp & 0x80) != 0);
         registers.setZero((tmp & 0xff) == 0);
-        registers.setCarry((tmp & ~0xff) != 0);
+        registers.setCarry((tmp & ~0xff) == 0);
         return opcode.getCyclesMin();
     };
 
@@ -325,81 +332,46 @@ public class Instructions {
     };
 
     public final static Instruction PHP = (opcode, registers, memory) -> {
-        memory.setByte(registers.getAndDecSp() + 0x100, registers.getStatusFlag());
+        // the pushed copy always has the break flag set
+        memory.setByte(registers.getAndDecSp() + 0x100, registers.getStatusFlag() | 0b0001_0000);
         return opcode.getCyclesMin();
     };
 
-    public final static Instruction BPL = (opcode, registers, memory) -> {
+    /**
+     * Taken branch: +1 cycle, +2 cycles if the target is on another page
+     */
+    private static int branch(Opcode opcode, Registers registers, Memory memory, boolean condition) {
         Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (!registers.isSign()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
+        if (!condition) {
+            return opcode.getCyclesMin();
         }
-        return opcode.getCyclesMin();
-    };
+        registers.setPc(addr.getAddress());
+        return addr.isPageCrossed() ? opcode.getCyclesMax() : opcode.getCyclesMin() + 1;
+    }
 
-    public final static Instruction BMI = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (registers.isSign()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
-        }
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction BPL = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, !registers.isSign());
 
-    public final static Instruction BVC = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (!registers.isOverflow()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
-        }
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction BMI = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, registers.isSign());
 
-    public final static Instruction BVS = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (registers.isOverflow()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
-        }
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction BVC = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, !registers.isOverflow());
 
-    public final static Instruction BCC = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (!registers.isCarry()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
-        }
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction BVS = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, registers.isOverflow());
 
-    public final static Instruction BCS = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (registers.isCarry()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
-        }
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction BCC = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, !registers.isCarry());
 
-    public final static Instruction BNE = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (!registers.isZero()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
-        }
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction BCS = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, registers.isCarry());
 
-    public final static Instruction BEQ = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        if (registers.isZero()) {
-            registers.setPc(addr.getAddress());
-            return opcode.getCyclesMax();
-        }
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction BNE = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, !registers.isZero());
+
+    public final static Instruction BEQ = (opcode, registers, memory) ->
+            branch(opcode, registers, memory, registers.isZero());
 
     public final static Instruction BIT = (opcode, registers, memory) -> {
         Address addr = opcode.getAddressResolver().getAddress(registers, memory);
@@ -495,10 +467,11 @@ public class Instructions {
         registers.getAndIncPc();
         memory.setByte(registers.getAndDecSp() + 0x100, (registers.getPc() >> 8) & 0xff);
         memory.setByte(registers.getAndDecSp() + 0x100, registers.getPc() & 0xff);
+        registers.setBreak_(true);
         memory.setByte(registers.getAndDecSp() + 0x100, registers.getStatusFlag());
 
         registers.setInterrupt(true);
-        registers.setPc(0xfffe);
+        registers.setPc(memory.getByte(0xfffe) + memory.getByte(0xffff) * 0x100);
         return opcode.getCyclesMin();
     };
 
@@ -515,15 +488,14 @@ public class Instructions {
         return opcode.getCyclesMin();
     };
 
-    public final static Instruction NOP = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        return opcode.getCyclesMin();
-    };
+    public final static Instruction NOP = (opcode, registers, memory) -> opcode.getCyclesMin();
 
     public final static Instruction JSR = (opcode, registers, memory) -> {
         Address addr = opcode.getAddressResolver().getAddress(registers, memory);
-        memory.setByte(registers.getAndDecSp() + 0x100, (registers.getPc() >> 8) & 0xff);
-        memory.setByte(registers.getAndDecSp() + 0x100, registers.getPc() & 0xff);
+        // the return address pushed is the last byte of the JSR instruction (next instruction - 1)
+        int ret = (registers.getPc() - 1) & 0xffff;
+        memory.setByte(registers.getAndDecSp() + 0x100, (ret >> 8) & 0xff);
+        memory.setByte(registers.getAndDecSp() + 0x100, ret & 0xff);
         registers.setPc(addr.getAddress());
         return opcode.getCyclesMin();
     };
@@ -531,7 +503,7 @@ public class Instructions {
     public final static Instruction RTS = (opcode, registers, memory) -> {
         int tmp = memory.getByte(registers.incAndGetSp() + 0x100);
         tmp |= memory.getByte(registers.incAndGetSp() + 0x100) << 8;
-        registers.setPc(tmp);
+        registers.setPc(tmp + 1);
         return opcode.getCyclesMin();
     };
 

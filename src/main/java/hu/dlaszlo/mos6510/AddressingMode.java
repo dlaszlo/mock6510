@@ -62,7 +62,7 @@ public class AddressingMode {
         boolean pageBug = base + 1 > 0xff;
         int addr0 = memory.getByte(base)
                 + memory.getByte((base + 1) & 0xff) * 0x100;
-        int addr = addr0 + idx;
+        int addr = (addr0 + idx) & 0xffff;
         boolean pageCrossed = (addr0 & 0xff00) != (addr & 0xff00);
         return new Address(addr, pageCrossed, pageBug);
     };
@@ -81,7 +81,7 @@ public class AddressingMode {
         int idx = registers.getXr();
         int base = memory.getByte(registers.getAndIncPc())
                 + (memory.getByte(registers.getAndIncPc())) * 0x100;
-        int addr = base + idx;
+        int addr = (base + idx) & 0xffff;
         boolean pageCrossed = (base & 0xff00) != (addr & 0xff00);
         return new Address(addr, pageCrossed, false);
     };
@@ -93,7 +93,7 @@ public class AddressingMode {
         int idx = registers.getYr();
         int base = memory.getByte(registers.getAndIncPc())
                 + (memory.getByte(registers.getAndIncPc())) * 0x100;
-        int addr = base + idx;
+        int addr = (base + idx) & 0xffff;
         boolean pageCrossed = (base & 0xff00) != (addr & 0xff00);
         return new Address(addr, pageCrossed, false);
     };
@@ -117,7 +117,10 @@ public class AddressingMode {
     public final static AddressResolver REL = (registers, memory) -> {
         // convert 8 bit unsigned byte to 8 bit signed byte
         byte rel = (byte) memory.getByte(registers.getAndIncPc());
-        return new Address((registers.getPc()) + rel, false, false);
+        int pc = registers.getPc();
+        int addr = (pc + rel) & 0xffff;
+        boolean pageCrossed = (pc & 0xff00) != (addr & 0xff00);
+        return new Address(addr, pageCrossed, false);
     };
 
 }
