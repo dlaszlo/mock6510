@@ -109,6 +109,26 @@ class ControlFlowTest extends CpuTestBase {
     }
 
     @Test
+    void jsrReadsHighByteAfterPush() {
+        codeAt(0x01fd, 0x20, 0x00, 0x30);       // jsr $3000 inside the stack page
+        reg.setSp(0xff);
+        step();
+        // the pushed high byte of the return address ($01) overwrote the operand at $01ff
+        assertPc(0x0100);
+        assertEquals(0x01, mem.getByte(0x01ff));
+        assertEquals(0xff, mem.getByte(0x01fe));
+    }
+
+    @Test
+    void jsrAtEndOfMemory() {
+        codeAt(0xfffd, 0x20, 0x00, 0x30);       // jsr $3000
+        step();
+        assertPc(0x3000);
+        assertEquals(0xff, mem.getByte(0x01ff));
+        assertEquals(0xff, mem.getByte(0x01fe));
+    }
+
+    @Test
     void rts() {
         code(0x20, 0x00, 0x20);                 // jsr $2000
         poke(0x2000, 0x60);                     // rts

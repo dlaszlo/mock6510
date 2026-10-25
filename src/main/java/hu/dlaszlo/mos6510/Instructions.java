@@ -491,12 +491,14 @@ public class Instructions {
     public final static Instruction NOP = (opcode, registers, memory) -> opcode.getCyclesMin();
 
     public final static Instruction JSR = (opcode, registers, memory) -> {
-        Address addr = opcode.getAddressResolver().getAddress(registers, memory);
+        int addrLo = memory.getByte(registers.getAndIncPc());
         // the return address pushed is the last byte of the JSR instruction (next instruction - 1)
-        int ret = (registers.getPc() - 1) & 0xffff;
+        int ret = registers.getPc();
         memory.setByte(registers.getAndDecSp() + 0x100, (ret >> 8) & 0xff);
         memory.setByte(registers.getAndDecSp() + 0x100, ret & 0xff);
-        registers.setPc(addr.getAddress());
+        // the high byte of the target is fetched only after the push, so the push can overwrite it
+        int addrHi = memory.getByte(ret);
+        registers.setPc(addrLo + addrHi * 0x100);
         return opcode.getCyclesMin();
     };
 
