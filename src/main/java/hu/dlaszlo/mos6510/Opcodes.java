@@ -163,6 +163,93 @@ public class Opcodes {
         opcodeList.add(new Opcode(0x6c, JMP, IND, 3, 5, 5, "jmp ($$WORD)"));
         opcodeList.add(new Opcode(0xea, NOP, IMP, 1, 2, 2, "nop"));
 
+        // undocumented opcodes
+        opcodeList.add(new Opcode(0x07, SLO, ZP, 2, 5, 5, "slo $$BYTE"));
+        opcodeList.add(new Opcode(0x17, SLO, ZPX, 2, 6, 6, "slo $$BYTE,x"));
+        opcodeList.add(new Opcode(0x03, SLO, IZX, 2, 8, 8, "slo ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0x13, SLO, IZY, 2, 8, 8, "slo ($$BYTE),y"));
+        opcodeList.add(new Opcode(0x0f, SLO, ABS, 3, 6, 6, "slo $$WORD"));
+        opcodeList.add(new Opcode(0x1f, SLO, ABX, 3, 7, 7, "slo $$WORD,x"));
+        opcodeList.add(new Opcode(0x1b, SLO, ABY, 3, 7, 7, "slo $$WORD,y"));
+        opcodeList.add(new Opcode(0x27, RLA, ZP, 2, 5, 5, "rla $$BYTE"));
+        opcodeList.add(new Opcode(0x37, RLA, ZPX, 2, 6, 6, "rla $$BYTE,x"));
+        opcodeList.add(new Opcode(0x23, RLA, IZX, 2, 8, 8, "rla ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0x33, RLA, IZY, 2, 8, 8, "rla ($$BYTE),y"));
+        opcodeList.add(new Opcode(0x2f, RLA, ABS, 3, 6, 6, "rla $$WORD"));
+        opcodeList.add(new Opcode(0x3f, RLA, ABX, 3, 7, 7, "rla $$WORD,x"));
+        opcodeList.add(new Opcode(0x3b, RLA, ABY, 3, 7, 7, "rla $$WORD,y"));
+        opcodeList.add(new Opcode(0x47, SRE, ZP, 2, 5, 5, "sre $$BYTE"));
+        opcodeList.add(new Opcode(0x57, SRE, ZPX, 2, 6, 6, "sre $$BYTE,x"));
+        opcodeList.add(new Opcode(0x43, SRE, IZX, 2, 8, 8, "sre ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0x53, SRE, IZY, 2, 8, 8, "sre ($$BYTE),y"));
+        opcodeList.add(new Opcode(0x4f, SRE, ABS, 3, 6, 6, "sre $$WORD"));
+        opcodeList.add(new Opcode(0x5f, SRE, ABX, 3, 7, 7, "sre $$WORD,x"));
+        opcodeList.add(new Opcode(0x5b, SRE, ABY, 3, 7, 7, "sre $$WORD,y"));
+        opcodeList.add(new Opcode(0x67, RRA, ZP, 2, 5, 5, "rra $$BYTE"));
+        opcodeList.add(new Opcode(0x77, RRA, ZPX, 2, 6, 6, "rra $$BYTE,x"));
+        opcodeList.add(new Opcode(0x63, RRA, IZX, 2, 8, 8, "rra ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0x73, RRA, IZY, 2, 8, 8, "rra ($$BYTE),y"));
+        opcodeList.add(new Opcode(0x6f, RRA, ABS, 3, 6, 6, "rra $$WORD"));
+        opcodeList.add(new Opcode(0x7f, RRA, ABX, 3, 7, 7, "rra $$WORD,x"));
+        opcodeList.add(new Opcode(0x7b, RRA, ABY, 3, 7, 7, "rra $$WORD,y"));
+        opcodeList.add(new Opcode(0xc7, DCP, ZP, 2, 5, 5, "dcp $$BYTE"));
+        opcodeList.add(new Opcode(0xd7, DCP, ZPX, 2, 6, 6, "dcp $$BYTE,x"));
+        opcodeList.add(new Opcode(0xc3, DCP, IZX, 2, 8, 8, "dcp ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0xd3, DCP, IZY, 2, 8, 8, "dcp ($$BYTE),y"));
+        opcodeList.add(new Opcode(0xcf, DCP, ABS, 3, 6, 6, "dcp $$WORD"));
+        opcodeList.add(new Opcode(0xdf, DCP, ABX, 3, 7, 7, "dcp $$WORD,x"));
+        opcodeList.add(new Opcode(0xdb, DCP, ABY, 3, 7, 7, "dcp $$WORD,y"));
+        opcodeList.add(new Opcode(0xe7, ISC, ZP, 2, 5, 5, "isc $$BYTE"));
+        opcodeList.add(new Opcode(0xf7, ISC, ZPX, 2, 6, 6, "isc $$BYTE,x"));
+        opcodeList.add(new Opcode(0xe3, ISC, IZX, 2, 8, 8, "isc ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0xf3, ISC, IZY, 2, 8, 8, "isc ($$BYTE),y"));
+        opcodeList.add(new Opcode(0xef, ISC, ABS, 3, 6, 6, "isc $$WORD"));
+        opcodeList.add(new Opcode(0xff, ISC, ABX, 3, 7, 7, "isc $$WORD,x"));
+        opcodeList.add(new Opcode(0xfb, ISC, ABY, 3, 7, 7, "isc $$WORD,y"));
+        opcodeList.add(new Opcode(0x87, SAX, ZP, 2, 3, 3, "sax $$BYTE"));
+        opcodeList.add(new Opcode(0x97, SAX, ZPY, 2, 4, 4, "sax $$BYTE,y"));
+        opcodeList.add(new Opcode(0x83, SAX, IZX, 2, 6, 6, "sax ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0x8f, SAX, ABS, 3, 4, 4, "sax $$WORD"));
+        opcodeList.add(new Opcode(0xa7, LAX, ZP, 2, 3, 3, "lax $$BYTE"));
+        opcodeList.add(new Opcode(0xb7, LAX, ZPY, 2, 4, 4, "lax $$BYTE,y"));
+        opcodeList.add(new Opcode(0xa3, LAX, IZX, 2, 6, 6, "lax ($$BYTE,x)"));
+        opcodeList.add(new Opcode(0xb3, LAX, IZY, 2, 5, 6, "lax ($$BYTE),y"));
+        opcodeList.add(new Opcode(0xaf, LAX, ABS, 3, 4, 4, "lax $$WORD"));
+        opcodeList.add(new Opcode(0xbf, LAX, ABY, 3, 4, 5, "lax $$WORD,y"));
+        opcodeList.add(new Opcode(0xbb, LAS, ABY, 3, 4, 5, "las $$WORD,y"));
+        opcodeList.add(new Opcode(0x0b, ANC, IMM, 2, 2, 2, "anc #$$BYTE"));
+        opcodeList.add(new Opcode(0x2b, ANC, IMM, 2, 2, 2, "anc #$$BYTE"));
+        opcodeList.add(new Opcode(0x4b, ALR, IMM, 2, 2, 2, "alr #$$BYTE"));
+        opcodeList.add(new Opcode(0x6b, ARR, IMM, 2, 2, 2, "arr #$$BYTE"));
+        opcodeList.add(new Opcode(0xcb, SBX, IMM, 2, 2, 2, "sbx #$$BYTE"));
+        opcodeList.add(new Opcode(0xeb, SBC, IMM, 2, 2, 2, "usbc #$$BYTE"));
+        opcodeList.add(new Opcode(0x8b, ANE, IMM, 2, 2, 2, "ane #$$BYTE"));
+        opcodeList.add(new Opcode(0xab, LXA, IMM, 2, 2, 2, "lxa #$$BYTE"));
+        opcodeList.add(new Opcode(0x93, SHA, IZY, 2, 6, 6, "sha ($$BYTE),y"));
+        opcodeList.add(new Opcode(0x9f, SHA, ABY, 3, 5, 5, "sha $$WORD,y"));
+        opcodeList.add(new Opcode(0x9e, SHX, ABY, 3, 5, 5, "shx $$WORD,y"));
+        opcodeList.add(new Opcode(0x9c, SHY, ABX, 3, 5, 5, "shy $$WORD,x"));
+        opcodeList.add(new Opcode(0x9b, TAS, ABY, 3, 5, 5, "tas $$WORD,y"));
+        for (int op : new int[]{0x1a, 0x3a, 0x5a, 0x7a, 0xda, 0xfa}) {
+            opcodeList.add(new Opcode(op, NOP, IMP, 1, 2, 2, "nop"));
+        }
+        for (int op : new int[]{0x80, 0x82, 0x89, 0xc2, 0xe2}) {
+            opcodeList.add(new Opcode(op, NOP, IMM, 2, 2, 2, "nop #$$BYTE"));
+        }
+        for (int op : new int[]{0x04, 0x44, 0x64}) {
+            opcodeList.add(new Opcode(op, NOP, ZP, 2, 3, 3, "nop $$BYTE"));
+        }
+        for (int op : new int[]{0x14, 0x34, 0x54, 0x74, 0xd4, 0xf4}) {
+            opcodeList.add(new Opcode(op, NOP, ZPX, 2, 4, 4, "nop $$BYTE,x"));
+        }
+        opcodeList.add(new Opcode(0x0c, NOP, ABS, 3, 4, 4, "nop $$WORD"));
+        for (int op : new int[]{0x1c, 0x3c, 0x5c, 0x7c, 0xdc, 0xfc}) {
+            opcodeList.add(new Opcode(op, NOP, ABX, 3, 4, 5, "nop $$WORD,x"));
+        }
+        for (int op : new int[]{0x02, 0x12, 0x22, 0x32, 0x42, 0x52, 0x62, 0x72, 0x92, 0xb2, 0xd2, 0xf2}) {
+            opcodeList.add(new Opcode(op, JAM, IMP, 1, 0, 0, "jam"));
+        }
+
         Map<Integer, Opcode> opcodeMap = new HashMap<>();
 
         for (Opcode opcode : opcodeList) {

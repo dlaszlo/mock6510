@@ -13,14 +13,15 @@ import static hu.dlaszlo.mos6510.AddressingMode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Checks every opcode against the documented lengths and cycle counts of the NMOS 6510
+ * Checks all 256 opcodes against the lengths and cycle counts of the NMOS 6510
  */
 class OpcodeTableTest extends CpuTestBase {
 
-    private static final Set<String> READ_MODIFY_WRITE = Set.of("asl", "lsr", "rol", "ror", "inc", "dec");
-    private static final Set<String> STORE = Set.of("sta", "stx", "sty");
+    private static final Set<String> READ_MODIFY_WRITE = Set.of("asl", "lsr", "rol", "ror", "inc", "dec",
+            "slo", "rla", "sre", "rra", "dcp", "isc");
+    private static final Set<String> STORE = Set.of("sta", "stx", "sty", "sax", "sha", "shx", "shy", "tas");
     private static final Set<String> BRANCH = Set.of("bpl", "bmi", "bvc", "bvs", "bcc", "bcs", "bne", "beq");
-    private static final Set<String> CONTROL_FLOW = Set.of("jmp", "jsr", "rts", "rti", "brk");
+    private static final Set<String> CONTROL_FLOW = Set.of("jmp", "jsr", "rts", "rti", "brk", "jam");
 
     static Stream<Arguments> opcodes() {
         return Opcodes.OPCODE_MAP.values().stream()
@@ -58,6 +59,8 @@ class OpcodeTableTest extends CpuTestBase {
                 return 7;
             case "jmp":
                 return mode == ABS ? 3 : 5;
+            case "jam":
+                return 0;
         }
         if (BRANCH.contains(mnemonic) || mode == IMP) {
             return 2;
@@ -65,7 +68,8 @@ class OpcodeTableTest extends CpuTestBase {
         if (READ_MODIFY_WRITE.contains(mnemonic)) {
             if (mode == ZP) return 5;
             if (mode == ZPX || mode == ABS) return 6;
-            if (mode == ABX) return 7;
+            if (mode == ABX || mode == ABY) return 7;
+            if (mode == IZX || mode == IZY) return 8;
         }
         if (mode == IMM) return 2;
         if (mode == ZP) return 3;
@@ -88,8 +92,8 @@ class OpcodeTableTest extends CpuTestBase {
     }
 
     @Test
-    void allDocumentedOpcodesArePresent() {
-        assertEquals(151, Opcodes.OPCODE_MAP.size());
+    void allOpcodesArePresent() {
+        assertEquals(256, Opcodes.OPCODE_MAP.size());
     }
 
     @ParameterizedTest(name = "{0}")

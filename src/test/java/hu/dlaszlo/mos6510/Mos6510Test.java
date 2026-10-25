@@ -38,9 +38,9 @@ class Mos6510Test extends CpuTestBase {
     }
 
     @Test
-    void invalidOpcode() {
-        poke(CODE, 0x02);
-        assertThrows(IllegalArgumentException.class, () -> cpu.run(CODE, CODE + 1));
+    void jamStopsTheRun() {
+        poke(CODE, 0x02);                       // jam
+        assertThrows(IllegalStateException.class, () -> cpu.run(CODE, CODE + 1));
     }
 
     @Test

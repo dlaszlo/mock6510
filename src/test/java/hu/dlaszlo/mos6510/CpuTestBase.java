@@ -45,10 +45,16 @@ public abstract class CpuTestBase {
      * @return cycles used by the instruction
      */
     protected int step() {
-        int bc = mem.getByte(reg.getAndIncPc());
+        return step(cpu);
+    }
+
+    protected static int step(Mos6510 cpu) {
+        Registers registers = cpu.getRegisters();
+        Memory memory = cpu.getMemory();
+        int bc = memory.getByte(registers.getAndIncPc());
         Opcode opcode = Opcodes.OPCODE_MAP.get(bc);
         assertNotNull(opcode, String.format("Invalid opcode: 0x%02X", bc));
-        return opcode.getInstruction().run(opcode, reg, mem);
+        return opcode.getInstruction().run(opcode, registers, memory);
     }
 
     /**
